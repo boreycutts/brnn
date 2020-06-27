@@ -7,8 +7,8 @@ def create_anomaly():
 
 N = 17
 T = 1000
-y_t_max = 10
-y_t_min = -10
+y_t_max = 100
+y_t_min = -100
 y_N = []
 y_t = []
 variation = (0.01, 0.1)
@@ -29,8 +29,8 @@ for n in range(N):
         if random.randint(0, 100) == 42:
             y_N[n][t] = create_anomaly()
 
-for n in range(N):
-    plt.figure(n)
-    plt.plot(y_N[n])
+# for n in range(N):
+#     plt.figure(n)
+#     plt.plot(y_N[n])
 
-plt.show()
+# plt.show()
