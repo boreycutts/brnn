@@ -1,5 +1,11 @@
 import numpy as np
 import random
+from datetime import datetime
+from pytz import timezone
+from random_word import RandomWords
+import os.path
+from os import path
+
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout, BatchNormalization
@@ -7,7 +13,36 @@ from tensorflow.keras.optimizers import SGD
 
 import matplotlib.pyplot as plt
 
+def generate_model_name():
+    random_word = None
+    try:
+        r = RandomWords()
+        random_word = r.get_random_word()
+    except:
+        random_word = 'null'
+     
+    time_format = "%Y-%m-%d_%H-%M-%S"
+    now_time = datetime.now(timezone('US/Eastern'))
+
+    return now_time.strftime(time_format) + '_' + random_word
+
+def load_model():
+    model_name = input('Enter the model name to load a model for testing (or leave blank to create a new model):')
+    if model_name:
+        try:
+            print('\n\nLoading model...\n\n')
+            model = tf.keras.models.load_model('models/' + model_name)
+            return model
+        except:
+            if model_name:
+                print('No model found')
+            return None    
+
+    return None
+
 def create_model(input_shape, lstm_nodes):
+    print('\n\nCreating new model...\n\n')
+
     model = tf.keras.models.Sequential()
 
     model.add(Bidirectional(LSTM(lstm_nodes, batch_input_shape=input_shape, return_sequences=False)))
@@ -23,10 +58,11 @@ def create_model(input_shape, lstm_nodes):
     return model
 
 
-def train_model(model, x_train, y_train, epochs, d):
+def train_model(model, x_train, y_train, epochs):
+    print('\n\nTraining model...\n\n')
     opt = tf.keras.optimizers.Adadelta()
     loss = 'mse'
-    model.compile(loss=loss, optimizer=opt, metrics=['mse'])
+    model.compile(loss=loss, optimizer=opt)
 
     history = None
 
@@ -35,17 +71,51 @@ def train_model(model, x_train, y_train, epochs, d):
             history = model.fit(
                 x_train, 
                 y_train, 
-                epochs=epochs)
+                epochs=epochs
+            )
             break
         except KeyboardInterrupt:
-            print('\n\nTraining Stopped\n')
+            print('\n\nTraining Stopped\n\n')
             break
 
     model.summary()
 
-    output = model.predict(x_train)
+    model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
 
-    plt.plot(range(len(d.get('signal_filtered'))), d.get('signal_filtered'), 'g')
+    while True:
+        if path.exists('models/' + model_name):
+            response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n)')
+            if response.lower().replace(' ', '') == 'y':
+                break
+            else:
+                model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
+        else:
+            break
+
+
+    if not model_name:
+        model_name = generate_model_name()
+
+    print('\n\nSaving model...\n\n')
+    model.save('models/' + model_name)
+    return (model, history)
+
+def test_model(model, x_test, y_test, data_obj, history):
+    print('\n\nTesting model...\n\n')
+    while True:
+        try:
+            model.evaluate(
+                x_test, 
+                y_test
+            )
+            break
+        except KeyboardInterrupt:
+            print('\n\nTesting Stopped\n\n')
+            break
+
+    output = model.predict(x_test)
+
+    plt.plot(range(len(data_obj.get('signal_filtered'))), data_obj.get('signal_filtered'), 'g')
     plt.title('Filtered Signal')
 
     plt.figure()
@@ -53,12 +123,13 @@ def train_model(model, x_train, y_train, epochs, d):
     plt.title('Network Output')
 
     plt.figure()
-    plt.plot(range(len(d.get('signal_with_noise'))), d.get('signal_with_noise'), 'r')
+    plt.plot(range(len(data_obj.get('signal_with_noise'))), data_obj.get('signal_with_noise'), 'r')
     plt.title('Network Input')
 
-    plt.figure()
-    plt.plot(range(len(history.history['loss'])), history.history['loss'])
-    plt.title('Loss vs Epochs')
+    if history:
+        plt.figure()
+        plt.plot(range(len(history.history['loss'])), history.history['loss'])
+        plt.title('Loss vs Epochs')
 
     plt.show()
     
