@@ -1,7 +1,5 @@
 import numpy as np
 
-
-
 def format_data(batch_size, data_obj):
     signal = data_obj.get('signal')
     signal_with_noise = data_obj.get('signal_with_noise')
