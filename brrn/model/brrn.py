@@ -27,11 +27,13 @@ def generate_model_name():
     return now_time.strftime(time_format) + '_' + random_word
 
 def load_model():
-    model_name = input('Enter the model name to load a model for testing (or leave blank to create a new model):')
+    model_name = input('Enter the model name to load a model for testing (or leave blank to create a new model): ')
     if model_name:
         try:
             print('\n\nLoading model...\n\n')
             model = tf.keras.models.load_model('models/' + model_name)
+            print('\n\nModel summary:\n\n')
+            model.summary()
             return model
         except:
             if model_name:
@@ -84,7 +86,7 @@ def train_model(model, x_train, y_train, epochs):
 
     while True:
         if path.exists('models/' + model_name):
-            response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n)')
+            response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n) ')
             if response.lower().replace(' ', '') == 'y':
                 break
             else:

@@ -4,10 +4,10 @@ from brrn.model.brrn import load_model, create_model, train_model, test_model
 import numpy as np
 
 # Constants
-INPUT_LENGTH = 16           # Length of the bitstream to be modulated
-INPUT_SAMPLE_RATE = 96e3    # Sampling frequency for modulated waveform
+INPUT_LENGTH = 16
+INPUT_SAMPLE_RATE = 96e3
 LSTM_NODES = 32
-EPOCHS = 100                
+EPOCHS = 400                
 
 def run():
     model = load_model()
