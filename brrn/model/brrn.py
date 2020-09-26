@@ -6,6 +6,9 @@ from random_word import RandomWords
 import os.path
 from os import path
 
+from brrn.data.create_data import create_data
+from brrn.data.format_data import format_data
+
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout, BatchNormalization
@@ -63,18 +66,28 @@ def create_model(input_shape, lstm_nodes):
 def train_model(model, x_train, y_train, epochs):
     print('\n\nTraining model...\n\n')
     opt = tf.keras.optimizers.Adadelta()
-    loss = 'mse'
+    loss = 'log_cosh'
     model.compile(loss=loss, optimizer=opt)
 
     history = None
 
     while True:
         try:
-            history = model.fit(
-                x_train, 
-                y_train, 
-                epochs=epochs
-            )
+            # history = model.fit(
+            #     x_train, 
+            #     y_train, 
+            #     epochs=epochs
+            # )
+
+            for n in range(epochs):
+                print('Epoch ' + str(n) + '/' + str(epochs))
+                history = model.fit(
+                    x_train, 
+                    y_train, 
+                    epochs=1
+                )
+                data_obj_train = create_data(input_length=8, fs=10e6, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=1e6, T=1e-4)
+                (x_train, y_train) = format_data(32, data_obj_train)
             break
         except KeyboardInterrupt:
             print('\n\nTraining Stopped\n\n')
@@ -118,7 +131,7 @@ def test_model(model, x_test, y_test, data_obj, history):
     output = model.predict(x_test)
 
     plt.plot(range(len(data_obj.get('signal_filtered'))), data_obj.get('signal_filtered'), 'g')
-    plt.title('Filtered Signal')
+    plt.title('Lowpass Output')
 
     plt.figure()
     plt.plot(range(len(output)), output)
@@ -126,7 +139,7 @@ def test_model(model, x_test, y_test, data_obj, history):
 
     plt.figure()
     plt.plot(range(len(data_obj.get('signal_with_noise'))), data_obj.get('signal_with_noise'), 'r')
-    plt.title('Network Input')
+    plt.title('Input')
 
     if history:
         plt.figure()
