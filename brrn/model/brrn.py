@@ -29,8 +29,9 @@ def generate_model_name():
 
     return now_time.strftime(time_format) + '_' + random_word
 
-def load_model():
-    model_name = input('Enter the model name to load a model for testing (or leave blank to create a new model): ')
+def load_model(model_name):
+    if not model_name:
+        model_name = input('Enter the model name to load a model for testing (or leave blank to create a new model): ')
     if model_name:
         try:
             print('\n\nLoading model...\n\n')
@@ -45,16 +46,16 @@ def load_model():
 
     return None
 
-def create_model(input_shape, lstm_nodes):
+def create_model(input_shape, lstm_nodes, dense_nodes):
     print('\n\nCreating new model...\n\n')
 
     model = tf.keras.models.Sequential()
 
-    model.add(Bidirectional(LSTM(lstm_nodes, batch_input_shape=input_shape, return_sequences=False)))
+    model.add(Bidirectional(LSTM(lstm_nodes, batch_input_shape=input_shape, return_sequences=False, activation='relu')))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
-    model.add(Dense(128, activation="sigmoid"))
+    model.add(Dense(dense_nodes, activation="sigmoid"))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
@@ -63,31 +64,22 @@ def create_model(input_shape, lstm_nodes):
     return model
 
 
-def train_model(model, x_train, y_train, epochs):
+def train_model(model, x_train, y_train, epochs, opt):
     print('\n\nTraining model...\n\n')
-    opt = tf.keras.optimizers.Adadelta()
-    loss = 'log_cosh'
+    opt = tf.keras.optimizers.Adadelta() if opt == 'adadelta' else tf.keras.optimizers.Adam(learning_rate=1e-5)
+    loss = 'mse'
     model.compile(loss=loss, optimizer=opt)
 
     history = None
 
     while True:
         try:
-            # history = model.fit(
-            #     x_train, 
-            #     y_train, 
-            #     epochs=epochs
-            # )
-
-            for n in range(epochs):
-                print('Epoch ' + str(n) + '/' + str(epochs))
-                history = model.fit(
-                    x_train, 
-                    y_train, 
-                    epochs=1
-                )
-                data_obj_train = create_data(input_length=8, fs=10e6, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=1e6, T=1e-4)
-                (x_train, y_train) = format_data(32, data_obj_train)
+            ## Train with one dataset
+            history = model.fit(
+                x_train, 
+                y_train, 
+                epochs=epochs
+            )
             break
         except KeyboardInterrupt:
             print('\n\nTraining Stopped\n\n')
