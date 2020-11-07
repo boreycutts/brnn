@@ -2,7 +2,7 @@ import numpy as np
 import random
 from datetime import datetime
 from pytz import timezone
-from random_word import RandomWords
+# from random_word import RandomWords
 import os.path
 from os import path
 
@@ -16,18 +16,18 @@ from tensorflow.keras.optimizers import SGD
 
 import matplotlib.pyplot as plt
 
-def generate_model_name():
-    random_word = None
-    try:
-        r = RandomWords()
-        random_word = r.get_random_word()
-    except:
-        random_word = 'null'
+# def generate_model_name():
+#     random_word = None
+#     try:
+#         r = RandomWords()
+#         random_word = r.get_random_word()
+#     except:
+#         random_word = 'null'
      
-    time_format = "%Y-%m-%d_%H-%M-%S"
-    now_time = datetime.now(timezone('US/Eastern'))
+#     time_format = "%Y-%m-%d_%H-%M-%S"
+#     now_time = datetime.now(timezone('US/Eastern'))
 
-    return now_time.strftime(time_format) + '_' + random_word
+#     return now_time.strftime(time_format) + '_' + random_word
 
 def load_model(model_name):
     if not model_name:
@@ -64,7 +64,7 @@ def create_model(input_shape, lstm_nodes, dense_nodes):
     return model
 
 
-def train_model(model, x_train, y_train, epochs, opt):
+def train_model(model, x_train, y_train, epochs, opt, save=False):
     print('\n\nTraining model...\n\n')
     opt = tf.keras.optimizers.Adadelta() if opt == 'adadelta' else tf.keras.optimizers.Adam(learning_rate=1e-5)
     loss = 'mse'
@@ -87,24 +87,21 @@ def train_model(model, x_train, y_train, epochs, opt):
 
     model.summary()
 
-    model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
-
-    while True:
-        if path.exists('models/' + model_name):
-            response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n) ')
-            if response.lower().replace(' ', '') == 'y':
-                break
+    if(save):
+        model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
+        while True:
+            if path.exists('models/' + model_name):
+                response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n) ')
+                if response.lower().replace(' ', '') == 'y':
+                    break
+                else:
+                    model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
             else:
-                model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
-        else:
-            break
+                break
 
+        print('\n\nSaving model...\n\n')
+        model.save('models/' + model_name)
 
-    if not model_name:
-        model_name = generate_model_name()
-
-    print('\n\nSaving model...\n\n')
-    model.save('models/' + model_name)
     return (model, history)
 
 def test_model(model, x_test, y_test, data_obj, history):

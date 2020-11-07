@@ -17,8 +17,10 @@ TIMESTEPS = 32
 # freedolite
 LSTM_NODES = 8
 DENSE_NODES = 32
+# EPOCHS_DELTA = 2000                
+# EPOCHS_ADAM = 500      
 EPOCHS_DELTA = 2000                
-EPOCHS_ADAM = 500      
+EPOCHS_ADAM = 1000      
 
 # freedo
 # LSTM_NODES = 32
@@ -27,7 +29,7 @@ EPOCHS_ADAM = 500
 # EPOCHS_ADAM = 100                
 
 def run():
-    model = load_model()
+    model = load_model(None)
     history = None
     train = False
 
@@ -37,16 +39,16 @@ def run():
             train = True
 
     if not model or train:
-        data_obj_train = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=1e6, T=1e-4)
+        data_obj_train = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=100e3, T=1e-4)
         (x_train, y_train) = format_data(TIMESTEPS, data_obj_train)
 
         if not model:
             model = create_model(x_train.shape, LSTM_NODES, DENSE_NODES)
 
         (model, history) = train_model(model, x_train, y_train, EPOCHS_DELTA, 'adadelta')
-        (model, history) = train_model(model, x_train, y_train, EPOCHS_ADAM, 'adam')
+        (model, history) = train_model(model, x_train, y_train, EPOCHS_ADAM, 'adam', save=True)
 
-    data_obj_test = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=1e6, T=1e-4)
+    data_obj_test = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=600e3, cutoff=100e3, T=1e-4)
     (x_test, y_test) = format_data(TIMESTEPS, data_obj_test)
 
     test_model(model, x_test, y_test, data_obj_test, history)
