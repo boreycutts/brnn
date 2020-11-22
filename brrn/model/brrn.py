@@ -51,7 +51,7 @@ def create_model(input_shape, lstm_nodes, dense_nodes):
 
     model = tf.keras.models.Sequential()
 
-    model.add(Bidirectional(LSTM(lstm_nodes, batch_input_shape=input_shape, return_sequences=False, activation='relu')))
+    model.add(Bidirectional(LSTM(lstm_nodes, batch_input_shape=input_shape, return_sequences=False)))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
@@ -78,7 +78,8 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
             history = model.fit(
                 x_train, 
                 y_train, 
-                epochs=epochs
+                epochs=epochs,
+                batch_size=32
             )
             break
         except KeyboardInterrupt:

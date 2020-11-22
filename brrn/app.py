@@ -6,7 +6,7 @@ import numpy as np
 # Constants
 INPUT_LENGTH = 8
 INPUT_SAMPLE_RATE = 10e6
-TIMESTEPS = 32
+TIMESTEPS = 64
 
 # freedosuperlite
 # LSTM_NODES = 1
