@@ -51,7 +51,7 @@ def create_model(input_shape, lstm_nodes, dense_nodes):
 
     model = tf.keras.models.Sequential()
 
-    model.add(Bidirectional(LSTM(lstm_nodes, batch_input_shape=input_shape, return_sequences=False, activation='relu')))
+    model.add(Bidirectional(LSTM(lstm_nodes, return_sequences=False, activation='relu')))
     model.add(Dropout(0.2))
     model.add(BatchNormalization())
 
@@ -66,9 +66,9 @@ def create_model(input_shape, lstm_nodes, dense_nodes):
 
 def train_model(model, x_train, y_train, epochs, opt, save=False):
     print('\n\nTraining model...\n\n')
-    opt = tf.keras.optimizers.Adadelta() if opt == 'adadelta' else tf.keras.optimizers.Adam(learning_rate=1e-5)
+    opt = tf.keras.optimizers.Adadelta() if opt == 'adadelta' else tf.keras.optimizers.Adam(learning_rate=1e-6)
     loss = 'mse'
-    model.compile(loss=loss, optimizer=opt)
+    model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])
 
     history = None
 
@@ -78,7 +78,8 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
             history = model.fit(
                 x_train, 
                 y_train, 
-                epochs=epochs
+                epochs=epochs,
+                batch_size=128
             )
             break
         except KeyboardInterrupt:

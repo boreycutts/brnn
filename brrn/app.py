@@ -6,7 +6,7 @@ import numpy as np
 # Constants
 INPUT_LENGTH = 8
 INPUT_SAMPLE_RATE = 10e6
-TIMESTEPS = 32
+TIMESTEPS = 64
 
 # freedosuperlite
 # LSTM_NODES = 1
@@ -19,8 +19,8 @@ LSTM_NODES = 8
 DENSE_NODES = 32
 # EPOCHS_DELTA = 2000                
 # EPOCHS_ADAM = 500      
-EPOCHS_DELTA = 2000                
-EPOCHS_ADAM = 1000      
+EPOCHS_DELTA = 1500                
+EPOCHS_ADAM = 500      
 
 # freedo
 # LSTM_NODES = 32
@@ -46,9 +46,13 @@ def run():
             model = create_model(x_train.shape, LSTM_NODES, DENSE_NODES)
 
         (model, history) = train_model(model, x_train, y_train, EPOCHS_DELTA, 'adadelta')
+        data_obj_test = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=100e3, T=1e-4)
+        (x_test, y_test) = format_data(TIMESTEPS, data_obj_test)
+        test_model(model, x_test, y_test, data_obj_test, history)
+
         (model, history) = train_model(model, x_train, y_train, EPOCHS_ADAM, 'adam', save=True)
 
-    data_obj_test = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=600e3, cutoff=100e3, T=1e-4)
+    data_obj_test = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=100e3, T=1e-4)
     (x_test, y_test) = format_data(TIMESTEPS, data_obj_test)
 
     test_model(model, x_test, y_test, data_obj_test, history)
