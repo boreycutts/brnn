@@ -4,7 +4,7 @@ from brrn.model.brrn import load_model, create_model, train_model, test_model
 import numpy as np
 
 # Constants
-INPUT_LENGTH = 8
+INPUT_LENGTH = 16
 INPUT_SAMPLE_RATE = 10e6
 TIMESTEPS = 64
 
@@ -29,7 +29,7 @@ EPOCHS_ADAM = 500
 # EPOCHS_ADAM = 100                
 
 def run():
-    model = load_model(None)
+    model = load_model('audio_64_timesteps2')
     history = None
     train = False
 
