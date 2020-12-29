@@ -11,7 +11,7 @@ from brrn.data.format_data import format_data
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout, BatchNormalization
+from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout, BatchNormalization, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras.optimizers import SGD
 
 import matplotlib.pyplot as plt
@@ -51,13 +51,18 @@ def create_model(input_shape, lstm_nodes, dense_nodes):
 
     model = tf.keras.models.Sequential()
 
-    model.add(Bidirectional(LSTM(lstm_nodes, return_sequences=False, activation='relu')))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
+    model.add(Conv1D(filters=64, kernel_size=2, activation='relu'))
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Flatten())
+    model.add(Dense(50, activation='relu'))
 
-    model.add(Dense(dense_nodes, activation="sigmoid"))
-    model.add(Dropout(0.2))
-    model.add(BatchNormalization())
+    # model.add(Bidirectional(LSTM(lstm_nodes, return_sequences=False, activation='relu')))
+    # model.add(Dropout(0.2))
+    # model.add(BatchNormalization())
+
+    # model.add(Dense(dense_nodes, activation="sigmoid"))
+    # model.add(Dropout(0.2))
+    # model.add(BatchNormalization())
 
     model.add(Dense(1, activation="linear"))
 
@@ -68,7 +73,7 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
     print('\n\nTraining model...\n\n')
     opt = tf.keras.optimizers.Adadelta() if opt == 'adadelta' else tf.keras.optimizers.Adam(learning_rate=1e-6)
     loss = 'mse'
-    model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])
+    model.compile(loss=loss, optimizer=opt)
 
     history = None
 

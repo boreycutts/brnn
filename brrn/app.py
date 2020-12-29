@@ -19,7 +19,7 @@ LSTM_NODES = 8
 DENSE_NODES = 32
 # EPOCHS_DELTA = 2000                
 # EPOCHS_ADAM = 500      
-EPOCHS_DELTA = 1500                
+EPOCHS_DELTA = 500                
 EPOCHS_ADAM = 500      
 
 # freedo
@@ -29,7 +29,7 @@ EPOCHS_ADAM = 500
 # EPOCHS_ADAM = 100                
 
 def run():
-    model = load_model('audio_64_timesteps2')
+    model = load_model(None)
     history = None
     train = False
 
@@ -52,7 +52,7 @@ def run():
 
         (model, history) = train_model(model, x_train, y_train, EPOCHS_ADAM, 'adam', save=True)
 
-    data_obj_test = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=500e3, cutoff=100e3, T=1e-4)
+    data_obj_test = create_data(input_length=INPUT_LENGTH, fs=INPUT_SAMPLE_RATE, fnoise_min=2e6, fnoise_max=5e6, f1=100e4, cutoff=100e3, T=1e-4)
     (x_test, y_test) = format_data(TIMESTEPS, data_obj_test)
 
     test_model(model, x_test, y_test, data_obj_test, history)

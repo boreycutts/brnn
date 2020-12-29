@@ -40,9 +40,9 @@ def create_data(input_length=32, fs=48000, amplitude=2, offset=0.25, T=0.017, f0
         if bitstream[i] == 1:
             y_i = np.sin(2 * np.pi * f1 * x_i)/amplitude + offset
         else:
-            y_i = np.sin(2 * np.pi * f0 * x_i)#/amplitude + offset
+            y_i = np.sin(2 * np.pi * f0 * x_i)/amplitude + offset
 
-        mixer_i = np.sin(2 * np.pi * f1 * x_i)#/amplitude + offset
+        mixer_i = np.sin(2 * np.pi * f1 * x_i)/amplitude + offset
 
 
         x = np.append(x, x_i)
@@ -55,20 +55,20 @@ def create_data(input_length=32, fs=48000, amplitude=2, offset=0.25, T=0.017, f0
     signal_mixer = signal_with_noise * mixer
     signal_filtered = lowpass_filter(signal_mixer, cutoff, fs, 2)
 
-    plt.plot(signal_with_noise)
-    plt.figure()
-    plt.plot(signal_mixer)
-    plt.show()
-    exit()
+    # plt.plot(signal_with_noise)
+    # plt.figure()
+    # plt.plot(signal_mixer)
+    # plt.show()
+    # exit()
 
     return {
         'signal': y, 
-        'signal_with_noise': signal_mixer, 
-        'signal_filtered': signal_filtered
+        'signal_with_noise': signal_with_noise, 
+        'signal_filtered': signal_mixer
     }
 
     ## Audio Data Generation
-    # samplerate, data = read("test.wav")
+    # samplerate, data = read("test2.wav")
     # signal = np.array(data,dtype=float)
     # signal_normalized = (signal - np.min(signal))/np.ptp(signal)
     # signal_normalized_left_channel = np.concatenate(signal_normalized, axis=0)
