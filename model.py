@@ -2,24 +2,16 @@ import numpy as np
 import random
 from datetime import datetime
 from pytz import timezone
-# from random_word import RandomWords
 import os.path
 from os import path
 import math
-
-from brrn.data.create_data import create_data
-from brrn.data.format_data import format_data
+import time
+import matplotlib.pyplot as plt
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout, BatchNormalization, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras.optimizers import SGD
-
-import matplotlib.pyplot as plt
-
-import time
-
-BATCH_SIZE = 128
 
 def load_model(model_name):
     if not model_name:
@@ -38,23 +30,46 @@ def load_model(model_name):
 
     return None
 
-def create_model(input_shape, lstm_nodes, dense_nodes):
+def save_model(model, name=None):
+    if name:
+        model.save('models/' + name)
+        return name
+
+    model_name = input('\n\nSave model as: ')
+    while True:
+        if path.exists('models/' + model_name):
+            response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n) ')
+            if response.lower().replace(' ', '') == 'y':
+                break
+            else:
+                model_name = input('\n\nSave model as: ')
+        else:
+            break
+
+        print('\n\nSaving model...\n\n')
+        model.save('models/' + model_name)
+        return model_name
+
+def create_model(model_type, input_shape, dense_nodes):
     print('\n\nCreating new model...\n\n')
 
     model = tf.keras.models.Sequential()
 
-    model.add(Conv1D(filters=64, kernel_size=2, activation='relu'))
-    model.add(MaxPooling1D(pool_size=2))
-    model.add(Flatten())
-    model.add(Dense(50, activation='relu'))
-
-    # model.add(Bidirectional(LSTM(lstm_nodes, return_sequences=False, activation='relu')))
-    # model.add(Dropout(0.2))
-    # model.add(BatchNormalization())
-
-    # model.add(Dense(50, activation="sigmoid"))
-    # model.add(Dropout(0.2))
-    # model.add(BatchNormalization())
+    if model_type == "CNN":
+        model.add(Conv1D(filters=64, kernel_size=2, activation="relu"))
+        model.add(MaxPooling1D(pool_size=2))
+        model.add(Flatten())
+        model.add(Dense(dense_nodes, activation="relu"))
+    elif model_type == "LSTM":
+        model.add(Bidirectional(LSTM(8, return_sequences=False, activation="relu")))
+        model.add(Dropout(0.2))
+        model.add(BatchNormalization())
+        model.add(Dense(dense_nodes, activation="relu"))
+        model.add(Dropout(0.2))
+        model.add(BatchNormalization())
+    else:
+        print("Model type not supported")
+        exit()
 
     model.add(Dense(1, activation="linear"))
 
@@ -64,7 +79,6 @@ class timecallback(tf.keras.callbacks.Callback):
     def __init__(self):
         self.times = []
         self.testtime = 0
-        # use this value as reference to calculate cummulative time taken
         self.timetaken = time.time()
     def on_epoch_begin(self, epoch, logs={}):
         self.timetaken = time.time()
@@ -76,7 +90,7 @@ class timecallback(tf.keras.callbacks.Callback):
     def on_test_end(self, logs={}):
         print('Evaluation Time (ms): ' + str((time.time() - self.timetaken)*1000))
 
-def train_model(model, x_train, y_train, epochs, opt, save=False):
+def train_model(model, x_train, y_train, epochs, opt, batch_size):
     print('\n\nTraining model...\n\n')
     opt = tf.keras.optimizers.Adadelta() if opt == 'adadelta' else tf.keras.optimizers.Adam(learning_rate=1e-6)
     loss = 'mse'
@@ -92,7 +106,7 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
                 x_train, 
                 y_train, 
                 epochs=epochs,
-                batch_size=BATCH_SIZE,
+                batch_size=batch_size,
                 callbacks=[timetaken]
             )
             break
@@ -102,24 +116,9 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
 
     model.summary()
 
-    if(save):
-        model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
-        while True:
-            if path.exists('models/' + model_name):
-                response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n) ')
-                if response.lower().replace(' ', '') == 'y':
-                    break
-                else:
-                    model_name = input('\n\nSave model as (or leave blank to save using timestamp): ')
-            else:
-                break
-
-        print('\n\nSaving model...\n\n')
-        model.save('models/' + model_name)
-
     return (model, history)
 
-def test_model(model, x_test, y_test, data_obj, history, name):
+def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name, figure_name, component_name):
     print('\n\nTesting model...\n\n')
     timetaken = timecallback()
     while True:
@@ -127,7 +126,7 @@ def test_model(model, x_test, y_test, data_obj, history, name):
             model.evaluate(
                 x_test, 
                 y_test,
-                batch_size=BATCH_SIZE,
+                batch_size=batch_size,
                 callbacks=[timetaken]
             )
             break
@@ -135,11 +134,11 @@ def test_model(model, x_test, y_test, data_obj, history, name):
             print('\n\nTesting Stopped\n\n')
             break
 
-    output = model.predict(x_test, batch_size=BATCH_SIZE)
+    output = model.predict(x_test, batch_size=batch_size)
 
-    x = data_obj['signal_with_noise'][2000:]
-    y = data_obj['signal_filtered'][2000:]
-    y_hat = output.flatten()[2000:]
+    # x = data_obj['component_input'][2000:]
+    # y = data_obj['component_output'][2000:]
+    # y_hat = output.flatten()[2000:]
 
     # magnitude = 20*math.log10((max(y) - min(y))/(max(x) - min(x)))
     # magnitude_hat = 20*math.log10((max(y_hat) - min(y_hat))/(max(x) - min(x)))
@@ -147,26 +146,28 @@ def test_model(model, x_test, y_test, data_obj, history, name):
     # print('Magnitude = ' + str(magnitude))
     # print('Magnitude_hat = ' + str(magnitude_hat))
 
+    if not os.path.exists("figures/" + model_name):
+        os.makedirs("figures/" + model_name)
 
-    plt.plot(range(len(data_obj.get('signal_filtered'))), data_obj.get('signal_filtered'), 'g')
-    plt.title('Lowpass Output')
-    plt.savefig(name + ' Lowpass Output.png')
+    plt.plot(data_obj["component_output"], 'g')
+    plt.title(component_name + ' Output')
+    plt.savefig("figures/" + model_name + "/" + figure_name + " " + component_name + " Output.png")
 
     plt.figure()
     plt.plot(range(len(output)), output)
     plt.title('Network Output')
-    plt.savefig(name + ' Network Output.png')
+    plt.savefig("figures/" + model_name + "/" + figure_name + ' Network Output.png')
 
     plt.figure()
-    plt.plot(range(len(data_obj.get('signal_with_noise'))), data_obj.get('signal_with_noise'), 'r')
+    plt.plot(data_obj["component_input"], 'r')
     plt.title('Input')
-    plt.savefig(name + ' Input.png')
+    plt.savefig("figures/" + model_name + "/" + figure_name + ' Input.png')
 
     if history:
         plt.figure()
         plt.plot(range(len(history.history['loss'])), history.history['loss'])
         plt.title('Loss vs Epochs')
-        plt.savefig(name + ' Loss vs Epochs.png')
+        plt.savefig("figures/" + model_name + "/" + figure_name + ' Loss vs Epochs.png')
 
     plt.show()
     
