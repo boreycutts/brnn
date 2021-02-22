@@ -5,6 +5,7 @@ from pytz import timezone
 # from random_word import RandomWords
 import os.path
 from os import path
+import math
 
 from brrn.data.create_data import create_data
 from brrn.data.format_data import format_data
@@ -16,18 +17,9 @@ from tensorflow.keras.optimizers import SGD
 
 import matplotlib.pyplot as plt
 
-# def generate_model_name():
-#     random_word = None
-#     try:
-#         r = RandomWords()
-#         random_word = r.get_random_word()
-#     except:
-#         random_word = 'null'
-     
-#     time_format = "%Y-%m-%d_%H-%M-%S"
-#     now_time = datetime.now(timezone('US/Eastern'))
+import time
 
-#     return now_time.strftime(time_format) + '_' + random_word
+BATCH_SIZE = 128
 
 def load_model(model_name):
     if not model_name:
@@ -60,7 +52,7 @@ def create_model(input_shape, lstm_nodes, dense_nodes):
     # model.add(Dropout(0.2))
     # model.add(BatchNormalization())
 
-    # model.add(Dense(dense_nodes, activation="sigmoid"))
+    # model.add(Dense(50, activation="sigmoid"))
     # model.add(Dropout(0.2))
     # model.add(BatchNormalization())
 
@@ -68,6 +60,21 @@ def create_model(input_shape, lstm_nodes, dense_nodes):
 
     return model
 
+class timecallback(tf.keras.callbacks.Callback):
+    def __init__(self):
+        self.times = []
+        self.testtime = 0
+        # use this value as reference to calculate cummulative time taken
+        self.timetaken = time.time()
+    def on_epoch_begin(self, epoch, logs={}):
+        self.timetaken = time.time()
+    def on_epoch_end(self,epoch,logs = {}):
+        self.times.append((time.time() - self.timetaken)*1000)
+    def on_train_end(self,logs = {}):
+        print('Average Training Time:')
+        print(np.mean(self.times))
+    def on_test_end(self, logs={}):
+        print('Evaluation Time (ms): ' + str((time.time() - self.timetaken)*1000))
 
 def train_model(model, x_train, y_train, epochs, opt, save=False):
     print('\n\nTraining model...\n\n')
@@ -76,6 +83,7 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
     model.compile(loss=loss, optimizer=opt)
 
     history = None
+    timetaken = timecallback()
 
     while True:
         try:
@@ -84,7 +92,8 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
                 x_train, 
                 y_train, 
                 epochs=epochs,
-                batch_size=128
+                batch_size=BATCH_SIZE,
+                callbacks=[timetaken]
             )
             break
         except KeyboardInterrupt:
@@ -110,36 +119,54 @@ def train_model(model, x_train, y_train, epochs, opt, save=False):
 
     return (model, history)
 
-def test_model(model, x_test, y_test, data_obj, history):
+def test_model(model, x_test, y_test, data_obj, history, name):
     print('\n\nTesting model...\n\n')
+    timetaken = timecallback()
     while True:
         try:
             model.evaluate(
                 x_test, 
-                y_test
+                y_test,
+                batch_size=BATCH_SIZE,
+                callbacks=[timetaken]
             )
             break
         except KeyboardInterrupt:
             print('\n\nTesting Stopped\n\n')
             break
 
-    output = model.predict(x_test)
+    output = model.predict(x_test, batch_size=BATCH_SIZE)
+
+    x = data_obj['signal_with_noise'][2000:]
+    y = data_obj['signal_filtered'][2000:]
+    y_hat = output.flatten()[2000:]
+
+    # magnitude = 20*math.log10((max(y) - min(y))/(max(x) - min(x)))
+    # magnitude_hat = 20*math.log10((max(y_hat) - min(y_hat))/(max(x) - min(x)))
+
+    # print('Magnitude = ' + str(magnitude))
+    # print('Magnitude_hat = ' + str(magnitude_hat))
+
 
     plt.plot(range(len(data_obj.get('signal_filtered'))), data_obj.get('signal_filtered'), 'g')
     plt.title('Lowpass Output')
+    plt.savefig(name + ' Lowpass Output.png')
 
     plt.figure()
     plt.plot(range(len(output)), output)
     plt.title('Network Output')
+    plt.savefig(name + ' Network Output.png')
 
     plt.figure()
     plt.plot(range(len(data_obj.get('signal_with_noise'))), data_obj.get('signal_with_noise'), 'r')
     plt.title('Input')
+    plt.savefig(name + ' Input.png')
 
     if history:
         plt.figure()
         plt.plot(range(len(history.history['loss'])), history.history['loss'])
         plt.title('Loss vs Epochs')
+        plt.savefig(name + ' Loss vs Epochs.png')
 
     plt.show()
     
