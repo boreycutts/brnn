@@ -40,15 +40,17 @@ def save_model(model, name=None):
         if path.exists('models/' + model_name):
             response = input('\n\nA model already exists with the same name would you like to overwrite? (y/n) ')
             if response.lower().replace(' ', '') == 'y':
-                break
+                print('\n\nSaving model...\n\n')
+                if model:
+                    model.save('models/' + model_name)
+                return model_name
             else:
                 model_name = input('\n\nSave model as: ')
         else:
-            break
-
-        print('\n\nSaving model...\n\n')
-        model.save('models/' + model_name)
-        return model_name
+            print('\n\nSaving model...\n\n')
+            if model:
+                model.save('models/' + model_name)
+            return model_name
 
 def create_model(model_type, input_shape, dense_nodes):
     print('\n\nCreating new model...\n\n')
@@ -118,7 +120,7 @@ def train_model(model, x_train, y_train, epochs, opt, batch_size):
 
     return (model, history)
 
-def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name, figure_name, component_name):
+def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name, figure_name, component_name, plot):
     print('\n\nTesting model...\n\n')
     timetaken = timecallback()
     while True:
@@ -136,32 +138,23 @@ def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name,
 
     output = model.predict(x_test, batch_size=batch_size)
 
-    # x = data_obj['component_input'][2000:]
-    # y = data_obj['component_output'][2000:]
-    # y_hat = output.flatten()[2000:]
-
-    # magnitude = 20*math.log10((max(y) - min(y))/(max(x) - min(x)))
-    # magnitude_hat = 20*math.log10((max(y_hat) - min(y_hat))/(max(x) - min(x)))
-
-    # print('Magnitude = ' + str(magnitude))
-    # print('Magnitude_hat = ' + str(magnitude_hat))
-
     if not os.path.exists("figures/" + model_name):
         os.makedirs("figures/" + model_name)
 
-    plt.plot(data_obj["component_output"], 'g')
-    plt.title(component_name + ' Output')
-    plt.savefig("figures/" + model_name + "/" + figure_name + " " + component_name + " Output.png")
+    fig, axs = plt.subplots(3)
 
-    plt.figure()
-    plt.plot(range(len(output)), output)
-    plt.title('Network Output')
-    plt.savefig("figures/" + model_name + "/" + figure_name + ' Network Output.png')
+    axs[0].plot(data_obj["component_input"], 'r')
+    axs[0].set_title("Input")
 
-    plt.figure()
-    plt.plot(data_obj["component_input"], 'r')
-    plt.title('Input')
-    plt.savefig("figures/" + model_name + "/" + figure_name + ' Input.png')
+    axs[1].plot(data_obj["component_output"], 'g')
+    axs[1].set_title(component_name + " Output")
+
+    axs[2].plot(output)
+    axs[2].set_title("Network Output")
+    
+    fig.tight_layout()
+
+    plt.savefig("figures/" + model_name + "/" + figure_name)
 
     if history:
         plt.figure()
@@ -169,5 +162,44 @@ def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name,
         plt.title('Loss vs Epochs')
         plt.savefig("figures/" + model_name + "/" + figure_name + ' Loss vs Epochs.png')
 
-    plt.show()
+    if plot:
+        plt.show()
+
+def compute_magnitude(model, x_test, data_obj, batch_size, frequency, model_name, plot):
+    output = model.predict(x_test, batch_size=batch_size)
     
+    x = data_obj['component_input'][2000:]
+    y = data_obj['component_output'][2000:]
+    y_hat = output.flatten()[2000:]
+
+    magnitude = 20*math.log10((max(y) - min(y))/(max(x) - min(x)))
+    magnitude_hat = 20*math.log10((max(y_hat) - min(y_hat))/(max(x) - min(x)))
+
+    print('Low Pass Magnitude = ' + str(magnitude))
+    print('Network Magnitude = ' + str(magnitude_hat))
+
+    if not os.path.exists("figures/" + model_name + "/freq"):
+        os.makedirs("figures/" + model_name + "/freq")
+
+    frequency = str(frequency)
+    plt.figure()
+    plt.plot(data_obj["component_output"], 'g')
+    plt.title('Lowpass Output')
+    plt.savefig("figures/" + model_name + "/freq/" + frequency + " Lowpass Output.png")
+
+    plt.figure()
+    plt.plot(output)
+    plt.title('Network Output')
+    plt.savefig("figures/" + model_name + "/freq/" + frequency + ' Network Output.png')
+
+    plt.figure()
+    plt.plot(data_obj["component_input"], 'r')
+    plt.title('Input')
+    plt.savefig("figures/" + model_name + "/freq/" + frequency + ' Input.png')
+
+    if plot:
+        plt.show()
+
+    plt.close('all')
+
+    return (magnitude, magnitude_hat)

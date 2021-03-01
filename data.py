@@ -4,6 +4,14 @@ from scipy import signal
 from scipy.io.wavfile import read
 import random
 
+# Constants
+T = 1e-4
+input_length = 16
+fs = 10e6
+f0 = 0
+f1 = 500e3
+cutoff = 100e3
+
 def normalize(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
@@ -12,26 +20,27 @@ def lowpass_filter(data, cutoff, fs, order):
     normal_cutoff = cutoff / nyq
     b = signal.firwin(80, normal_cutoff, window=('kaiser', 8))
     y = signal.lfilter(b, 1, data)
+
+    # w, h = signal.freqz(b)
+    # x = w * fs * 1.0 / (2 * np.pi)
+    # plt.plot(x, 20 * np.log10(abs(h)))
+    # plt.grid(True)
+    # plt.xlabel('Frequency (MHz)')
+    # plt.ylabel('Magnitude (dB)')
+    # plt.title('Magnitude Response of DDC Filter')
+    # plt.show()
+    # exit()
+
     return y
 
 def create_data(dataset, component):
     print('\n\nCreating data...\n\n')
-
-    # Constants
-    T = 1e-4
-    input_length = 16
-    fs = 10e6
-    f0 = 0
-    f1 = 500e3
-    cutoff = 100e3
     
     if dataset == "OOK":
         x = np.array([])
         y = np.array([])
         mixer = np.array([])
         bitstream = np.random.randint(2, size=input_length)
-        # bitstream = np.zeros(input_length) + 1
-        # bitstream = np.array([1,1,0,0,1,0,0,0,1,0,1,1,1,0,0,1])
 
         print("OOK Bitstream = " + str(bitstream))
 
@@ -142,3 +151,31 @@ def format_data(data_obj, timesteps):
     x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], 1)
 
     return (x_train, y_train)
+
+def create_freq_data(frequency):
+    x = np.array([])
+    y = np.array([])
+    # mixer = np.array([])
+
+    for i in range(input_length):
+        x_i = np.arange(T * fs) / fs + (i * T)
+        y_i = np.sin(2 * np.pi * frequency * x_i)
+        # mixer_i = np.sin(2 * np.pi * f1 * x_i)
+
+        x = np.append(x, x_i)
+        y = np.append(y, y_i)
+        # mixer = np.append(mixer, mixer_i)
+
+    y = normalize(y)
+    # mixer = normalize(mixer)
+
+    # signal_mixer = y * mixer
+    # signal_filtered = lowpass_filter(signal_mixer, cutoff, fs, 2)
+
+    signal_filtered = lowpass_filter(y, cutoff, fs, 2)
+
+    return {
+        'signal': y, 
+        'component_input': y, 
+        'component_output': signal_filtered
+    }
