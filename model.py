@@ -136,7 +136,9 @@ def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name,
             print('\n\nTesting Stopped\n\n')
             break
 
+    predict_time = time.time()
     output = model.predict(x_test, batch_size=batch_size)
+    print("Prediction Time (ms): " + str((time.time() - predict_time)*1000))
 
     if not os.path.exists("figures/" + model_name):
         os.makedirs("figures/" + model_name)
