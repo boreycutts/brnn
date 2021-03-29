@@ -7,18 +7,25 @@ from os import path
 import math
 import time
 import matplotlib.pyplot as plt
+import sys
 
 import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Bidirectional, LSTM, Dense, Dropout, BatchNormalization, Conv1D, MaxPooling1D, Flatten
 from tensorflow.keras.optimizers import SGD
 
+def signaltonoise(a, axis=0, ddof=0):
+    a = np.asanyarray(a)
+    m = a.mean(axis)
+    sd = a.std(axis=axis, ddof=ddof)
+    return np.where(sd == 0, 0, m/sd)
+
 def load_model(model_name):
     if not model_name:
         model_name = input('Enter the model name to load a model for testing (or leave blank to create a new model): ')
     if model_name:
+        print('\n\nLoading model...\n\n')
         try:
-            print('\n\nLoading model...\n\n')
             model = tf.keras.models.load_model('models/' + model_name)
             print('\n\nModel summary:\n\n')
             model.summary()
@@ -58,7 +65,7 @@ def create_model(model_type, input_shape, dense_nodes):
     model = tf.keras.models.Sequential()
 
     if model_type == "CNN":
-        model.add(Conv1D(filters=64, kernel_size=2, activation="relu"))
+        model.add(Conv1D(filters=32, kernel_size=2, activation="relu"))
         model.add(MaxPooling1D(pool_size=2))
         model.add(Flatten())
         model.add(Dense(dense_nodes, activation="relu"))
@@ -137,8 +144,19 @@ def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name,
             break
 
     predict_time = time.time()
-    output = model.predict(x_test, batch_size=batch_size)
+    output = model.predict(x_test, batch_size=batch_size).flatten()
+
+    diff = np.array([])
+    mse = []
+    mse_x = []
+    for i in range(0, len(output)-128, 128):
+        diff = np.concatenate((diff, data_obj["component_output"][i:i+128] - output[i:i+128]))
+        mse.append((diff**2).mean())
+        mse_x.append(i+128)
+
     print("Prediction Time (ms): " + str((time.time() - predict_time)*1000))
+
+    print("Signal to Noise Ratio: " + str(signaltonoise(output)))
 
     if not os.path.exists("figures/" + model_name):
         os.makedirs("figures/" + model_name)
@@ -152,6 +170,12 @@ def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name,
     axs[1].set_title(component_name + " Output")
 
     axs[2].plot(output)
+    axs[2].tick_params(axis='y', colors="#1f77b4")
+
+    ax2 = axs[2].twinx()
+    ax2.plot(mse_x, mse, "orange", label="Error")
+    ax2.tick_params(axis='y', colors='orange')
+    ax2.legend()
     axs[2].set_title("Network Output")
     
     fig.tight_layout()
@@ -163,6 +187,7 @@ def test_model(model, x_test, y_test, data_obj, history, batch_size, model_name,
         plt.plot(range(len(history.history['loss'])), history.history['loss'])
         plt.title('Loss vs Epochs')
         plt.savefig("figures/" + model_name + "/" + figure_name + ' Loss vs Epochs.png')
+        np.save("figures/" + model_name + "/" + figure_name + " Loss vs Epochs", history.history['loss'])
 
     if plot:
         plt.show()

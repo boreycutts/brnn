@@ -12,6 +12,12 @@ f0 = 0
 f1 = 500e3
 cutoff = 100e3
 
+def signaltonoise(a, axis=0, ddof=0):
+    a = np.asanyarray(a)
+    m = a.mean(axis)
+    sd = a.std(axis=axis, ddof=ddof)
+    return np.where(sd == 0, 0, m/sd)
+
 def normalize(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))
 
@@ -21,15 +27,15 @@ def lowpass_filter(data, cutoff, fs, order):
     b = signal.firwin(80, normal_cutoff, window=('kaiser', 8))
     y = signal.lfilter(b, 1, data)
 
-    # w, h = signal.freqz(b)
-    # x = w * fs * 1.0 / (2 * np.pi)
-    # plt.plot(x, 20 * np.log10(abs(h)))
-    # plt.grid(True)
-    # plt.xlabel('Frequency (MHz)')
-    # plt.ylabel('Magnitude (dB)')
-    # plt.title('Magnitude Response of DDC Filter')
-    # plt.show()
-    # exit()
+    w, h = signal.freqz(b)
+    x = w * fs * 1.0 / (2 * np.pi)
+    plt.plot(x, 20 * np.log10(abs(h)))
+    plt.grid(True)
+    plt.xlabel('Frequency (MHz)')
+    plt.ylabel('Magnitude (dB)')
+    plt.title('Frequency Response of DDC Filter')
+    plt.show()
+    exit()
 
     return y
 
@@ -40,11 +46,12 @@ def create_data(dataset, component):
         x = np.array([])
         y = np.array([])
         mixer = np.array([])
-        bitstream = np.random.randint(2, size=input_length)
+        # bitstream = np.random.randint(2, size=input_length)
+        bitstream = np.array([1,0,1,0,0,0,0,0,1,1,0,0,0,1,0,0])
 
         print("OOK Bitstream = " + str(bitstream))
 
-        for i in range(input_length):
+        for i in range(len(bitstream)):
             x_i = np.arange(T * fs) / fs + (i * T)
             if bitstream[i] == 1:
                 y_i = np.sin(2 * np.pi * f1 * x_i)
@@ -65,6 +72,14 @@ def create_data(dataset, component):
 
         signal_mixer = signal_with_noise * mixer
         signal_filtered = lowpass_filter(signal_mixer, cutoff, fs, 2)
+
+        # print("y")
+        # print(signaltonoise(y))
+        # print("signal_with_noise")
+        # print(signaltonoise(signal_with_noise))
+        # print("signal_filtered")
+        # print(signaltonoise(signal_filtered))
+        # exit()
 
         component_input = None
         component_output = None
