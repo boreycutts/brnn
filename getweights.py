@@ -30,9 +30,12 @@ model2.add(Conv1D(  filters=64,
 
 data_obj_test = create_data("OOK", "LPF")
 (x_test, y_test) = format_data(data_obj_test, 64)
+timetaken = time.time()
 output = model2.predict(x_test)
+timetaken = time.time() - timetaken
+print(str(timetaken/len(x_test)*1e6) + " μs")
 
-np.save("data", output)
+# np.save("data", output)
 
 
 # model = tf.keras.models.load_model("models/CNNK4F8")
