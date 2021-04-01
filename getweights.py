@@ -23,7 +23,7 @@ model = tf.keras.models.load_model("models/CNN64128")
 weights = model.layers[0].get_weights()
 
 model2 = tf.keras.models.Sequential()
-model2.add(Conv1D(  filters=64, 
+model2.add(Conv1D(  filters=16, 
                     kernel_size=2, 
                     activation="relu", 
                     weights=weights))

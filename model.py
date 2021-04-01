@@ -67,7 +67,7 @@ def create_model(model_type, input_shape, dense_nodes):
     model = tf.keras.models.Sequential()
 
     if model_type == "CNN":
-        model.add(Conv1D(filters=32, kernel_size=2, activation="relu"))
+        model.add(Conv1D(filters=16, kernel_size=2, activation="relu"))
         model.add(MaxPooling1D(pool_size=2))
         model.add(Flatten())
         model.add(Dense(dense_nodes, activation="relu"))
