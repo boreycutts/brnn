@@ -27,15 +27,15 @@ def lowpass_filter(data, cutoff, fs, order):
     b = signal.firwin(80, normal_cutoff, window=('kaiser', 8))
     y = signal.lfilter(b, 1, data)
 
-    w, h = signal.freqz(b)
-    x = w * fs * 1.0 / (2 * np.pi)
-    plt.plot(x, 20 * np.log10(abs(h)))
-    plt.grid(True)
-    plt.xlabel('Frequency (MHz)')
-    plt.ylabel('Magnitude (dB)')
-    plt.title('Frequency Response of DDC Filter')
-    plt.show()
-    exit()
+    # w, h = signal.freqz(b)
+    # x = w * fs * 1.0 / (2 * np.pi)
+    # plt.plot(x, 20 * np.log10(abs(h)))
+    # plt.grid(True)
+    # plt.xlabel('Frequency (MHz)')
+    # plt.ylabel('Magnitude (dB)')
+    # plt.title('Frequency Response of DDC Filter')
+    # plt.show()
+    # exit()
 
     return y
 
@@ -46,8 +46,8 @@ def create_data(dataset, component):
         x = np.array([])
         y = np.array([])
         mixer = np.array([])
-        # bitstream = np.random.randint(2, size=input_length)
-        bitstream = np.array([1,0,1,0,0,0,0,0,1,1,0,0,0,1,0,0])
+        bitstream = np.random.randint(2, size=input_length)
+        # bitstream = np.array([1,0,1,0,0,0,0,0,1,1,0,0,0,1,0,0])
 
         print("OOK Bitstream = " + str(bitstream))
 

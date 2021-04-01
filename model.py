@@ -29,6 +29,8 @@ def load_model(model_name):
             model = tf.keras.models.load_model('models/' + model_name)
             print('\n\nModel summary:\n\n')
             model.summary()
+            print(model.layers[0].get_weights())
+            print(len(model.layers[0].get_weights().flatten()))
             return model
         except:
             if model_name:

@@ -17,17 +17,35 @@ from tensorflow.keras.optimizers import SGD
 from data import create_data, format_data, create_freq_data
 from model import test_model
 
-model = tf.keras.models.load_model("models/CNNK4F8")
-weights = model.get_weights()
+import progressbar
 
-for i in range(len(weights)):
-    weights[i] = weights[i].astype("half")
+model = tf.keras.models.load_model("models/CNN64128")
+weights = model.layers[0].get_weights()
 
-model2 = model
-model2.set_weights(weights)
+model2 = tf.keras.models.Sequential()
+model2.add(Conv1D(  filters=64, 
+                    kernel_size=2, 
+                    activation="relu", 
+                    weights=weights))
 
 data_obj_test = create_data("OOK", "LPF")
 (x_test, y_test) = format_data(data_obj_test, 64)
+output = model2.predict(x_test)
 
-test_model(model, x_test, y_test, data_obj_test, None, 128, "test", 'Adam', "test", False)
-test_model(model2, x_test, y_test, data_obj_test, None, 128, "test1", 'Adam', "test", False)
+np.save("data", output)
+
+
+# model = tf.keras.models.load_model("models/CNNK4F8")
+# weights = model.get_weights()
+
+# for i in range(len(weights)):
+#     weights[i] = weights[i].astype("half")
+
+# model2 = model
+# model2.set_weights(weights)
+
+# data_obj_test = create_data("OOK", "LPF")
+# (x_test, y_test) = format_data(data_obj_test, 64)
+
+# test_model(model, x_test, y_test, data_obj_test, None, 128, "test", 'Adam', "test", False)
+# test_model(model2, x_test, y_test, data_obj_test, None, 128, "test1", 'Adam', "test", False)
