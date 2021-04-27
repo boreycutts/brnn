@@ -9,6 +9,7 @@ DEFAULT_BATCH_SIZE = 128
 DEFAULT_TIMESTEPS = 64
 DEFAULT_EPOCHS = "500,250"
 DEFAULT_DENSE_NODES = 50
+DEFAULT_FILTERS = 64
 
 def parse_args():
     parser = argparse.ArgumentParser(description="""
@@ -25,6 +26,7 @@ def parse_args():
     parser.add_argument("--timesteps", "-ts", type=int, default=DEFAULT_TIMESTEPS, help="Component used to train/test model. Accepts a positve integer")
     parser.add_argument("--epochs", "-e", default=DEFAULT_EPOCHS, help="Sets the number of epochs to train. Accepts a tuple of 2 positve comma separated integers for Adadelta and Adam epochs respectively")
     parser.add_argument("--dense-nodes", "-dn", type=int, default=DEFAULT_DENSE_NODES, help="Sets the number of dense layer nodes. Accepts a positive integer")
+    parser.add_argument("--filters", "-fs", type=int, default=DEFAULT_FILTERS, help="Sets the number of CNN layer filters. Accepts a positive integer")
 
     return parser.parse_args()
 
@@ -91,7 +93,7 @@ if __name__ == "__main__":
             (x_train, y_train) = format_data(data_obj_train, args.timesteps)
 
             if not model:
-                model = create_model(args.type, x_train.shape, args.dense_nodes)
+                model = create_model(args.type, x_train.shape, args.dense_nodes, filters=args.filters)
                 model_name = save_model(None)
 
             if epochs[0] > 0:

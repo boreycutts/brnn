@@ -29,8 +29,6 @@ def load_model(model_name):
             model = tf.keras.models.load_model('models/' + model_name)
             print('\n\nModel summary:\n\n')
             model.summary()
-            print(model.layers[0].get_weights())
-            print(len(model.layers[0].get_weights().flatten()))
             return model
         except:
             if model_name:
@@ -61,13 +59,13 @@ def save_model(model, name=None):
                 model.save('models/' + model_name)
             return model_name
 
-def create_model(model_type, input_shape, dense_nodes):
+def create_model(model_type, input_shape, dense_nodes, filters=None):
     print('\n\nCreating new model...\n\n')
 
     model = tf.keras.models.Sequential()
 
     if model_type == "CNN":
-        model.add(Conv1D(filters=16, kernel_size=2, activation="relu"))
+        model.add(Conv1D(filters=filters, kernel_size=2, activation="relu"))
         model.add(MaxPooling1D(pool_size=2))
         model.add(Flatten())
         model.add(Dense(dense_nodes, activation="relu"))
